@@ -1,51 +1,79 @@
-var board = null;
-var game = new Chess();
+document.addEventListener("DOMContentLoaded", function() {
+    const rows = "87654321";
+    const cols = "abcdefgh";
+    const initialBoardSetup = [
+        "rnbqkbnr",
+        "pppppppp",
+        "        ",
+        "        ",
+        "        ",
+        "        ",
+        "PPPPPPPP",
+        "RNBQKBNR"
+    ];
+    const boardElement = document.getElementById("chessboard");
+    let rotated = false;
 
-function onDrop(source, target, piece, newPos, oldPos, orientation) {
-    // See if the move is legal
-    var move = game.move({
-        from: source,
-        to: target,
-        promotion: 'q' // NOTE: Always promote to a queen for simplicity
-    });
-
-    // Illegal move
-    if (move === null) return 'snapback';
-    updateStatus();
-}
-
-function updateStatus() {
-    var status = '';
-
-    var moveColor = 'White';
-    if (game.turn() === 'b') {
-        moveColor = 'Black';
+    function createBoard() {
+        boardElement.innerHTML = '';
+        for (let i = 0; i < 64; i++) {
+            const square = document.createElement('div');
+            const row = Math.floor(i / 8);
+            const col = i % 8;
+            square.className = (row + col) % 2 === 0 ? 'white' : 'black';
+            const piece = document.createElement('span');
+            piece.className = 'piece';
+            piece.textContent = initialBoardSetup[row][col].replace(' ', '');
+            square.appendChild(piece);
+            boardElement.appendChild(square);
+        }
+        addDragDropHandlers();
     }
 
-    // checkmate?
-    if (game.in_checkmate()) {
-        status = 'Game over, ' + moveColor + ' is in checkmate.';
+    function addDragDropHandlers() {
+        const pieces = document.querySelectorAll('.piece');
+        pieces.forEach(piece => {
+            piece.draggable = true;
+            piece.addEventListener('dragstart', handleDragStart);
+        });
+
+        const squares = document.querySelectorAll('#chessboard div');
+        squares.forEach(square => {
+            square.addEventListener('dragover', handleDragOver);
+            square.addEventListener('drop', handleDrop);
+        });
     }
 
-    // draw?
-    else if (game.in_draw()) {
-        status = 'Game over, drawn position';
+    function handleDragStart(e) {
+        e.dataTransfer.setData('text', e.target.textContent);
+        e.dataTransfer.effectAllowed = 'move';
     }
 
-    console.log(status);
-}
-
-function resetBoard() {
-    game.reset();
-    board.start();
-}
-
-var config = {
-    draggable: true,
-    position: 'start',
-    onDrop: onDrop,
-    onSnapEnd: function() {
-        board.position(game.fen());
+    function handleDragOver(e) {
+        e.preventDefault();
     }
-};
-board = Chessboard('chessboard', config);
+
+    function handleDrop(e) {
+        e.preventDefault();
+        const data = e.dataTransfer.getData('text');
+        e.target.textContent = data;
+        e.target.draggable = true;
+    }
+
+    function resetBoard() {
+        createBoard();
+    }
+
+    function rotateBoard() {
+        rotated = !rotated;
+        boardElement.style.transform = rotated ? 'rotate(180deg)' : '';
+        const pieces = document.querySelectorAll('.piece');
+        pieces.forEach(piece => {
+            piece.style.transform = rotated ? 'rotate(180deg)' : '';
+        });
+    }
+
+    createBoard();  // Initial board setup
+    window.resetBoard = resetBoard;
+    window.rotateBoard = rotateBoard;
+});

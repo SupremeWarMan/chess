@@ -1,15 +1,20 @@
-body {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100vh;
-    background-color: #f0f0f0;
+#chessboard {
+    width: 320px;
+    height: 320px;
+    display: grid;
+    grid-template: repeat(8, 1fr) / repeat(8, 1fr);
+    border: 2px solid black;
+    margin-bottom: 10px;
 }
-
-button {
-    margin-top: 20px;
-    padding: 10px;
-    font-size: 16px;
-    cursor: pointer;
+.black {
+    background-color: #b58863;
+}
+.white {
+    background-color: #f0d9b5;
+}
+.piece {
+    font-size: 24px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
