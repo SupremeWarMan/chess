@@ -1,41 +1,38 @@
-var socket = io();
+document.addEventListener('DOMContentLoaded', function() {
+  var board = null;
+  var game = new Chess();
+  var boardConfig = {
+      draggable: true,
+      position: 'start',
+      onDragStart: function(source, piece, position, orientation) {
+          if (game.game_over() || (game.turn() === 'w' && piece.search(/^b/) !== -1) ||
+              (game.turn() === 'b' && piece.search(/^w/) !== -1)) {
+              return false;
+          }
+      },
+      onDrop: function(source, target) {
+          var move = game.move({
+              from: source,
+              to: target,
+              promotion: 'q' // NOTE: Always promote to a queen for simplicity
+          });
 
-var board,
-  game = new Chess();
+          if (move === null) return 'snapback';
 
-function makeMove(move) {
-  game.move(move);
-  board.position(game.fen());
-  socket.emit('move', move);
-}
+          // Store game state to local storage
+          localStorage.setItem('savedGame', game.fen());
+      },
+      onSnapEnd: function() {
+          board.position(game.fen());
+      }
+  };
 
-socket.on('move', function (msg) {
-  game.move(msg);
-  board.position(game.fen());
-});
-
-var config = {
-  draggable: true,
-  position: 'start',
-  onDragStart: function (source, piece, position, orientation) {
-    if (game.game_over() === true ||
-        (game.turn() === 'w' && piece.search(/^b/) !== -1) ||
-        (game.turn() === 'b' && piece.search(/^w/) !== -1)) {
-      return false;
-    }
-  },
-  onDrop: function (source, target) {
-    var move = game.move({
-      from: source,
-      to: target,
-      promotion: 'q' // NOTE: always promote to a queen for example simplicity
-    });
-
-    if (move === null)  return 'snapback';
-    makeMove(move);
-  },
-  onSnapEnd: function () {
-    board.position(game.fen());
+  // Initialize board with local storage saved state
+  var savedGame = localStorage.getItem('savedGame');
+  if (savedGame) {
+      game.load(savedGame);
+      boardConfig.position = savedGame;
   }
-};
-board = ChessBoard('chessboard', config);
+
+  board = Chessboard('chessboard', boardConfig);
+});
